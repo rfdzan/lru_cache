@@ -5,21 +5,21 @@ import java.{util => ju}
 class lruCache[T](itemLimit: Int):
   private var map: Map[String, T] = Map()
   private var dll = new doublyLinkedList[String]
-  private def evict(key: String, put: Boolean): Unit = 
+  private def evict(key: String, put: Boolean): Unit =
     val plusOne = if put then 1 else 0
     if map.size + plusOne > itemLimit then
       // get key from ddl
       // use popped key from ddl to
       // remove map entry possesing that key.
       val popped = dll.popFront match
-        case None => None
+        case None      => None
         case Some(key) => map.remove(key)
     dll.pushToBack(key)
   def has(key: String): Boolean =
     evict(key, false)
     map.get(key) match
-    	case None => false
-    	case Some(value) => true
+      case None        => false
+      case Some(value) => true
   def get(key: String): Option[T] =
     evict(key, false)
     return map.get(key)
@@ -86,4 +86,3 @@ class doublyLinkedList[T](
 
 @main def main =
   println()
-

@@ -2,7 +2,7 @@
 import Main.lruCache
 class LruTests extends munit.FunSuite:
   test("eviction") {
-    val newLru = lruCache[Int](5)  
+    val newLru = lruCache[Int](5)
     assert(newLru.has("one") == false)
     newLru.set("one", 1)
     newLru.set("two", 2)
@@ -15,7 +15,7 @@ class LruTests extends munit.FunSuite:
     assert(newLru.has("six"))
   }
   test("get values") {
-    val newLru = lruCache[Int](5)  
+    val newLru = lruCache[Int](5)
     newLru.set("one", 1)
     newLru.set("two", 2)
     newLru.set("three", 3)
@@ -25,7 +25,7 @@ class LruTests extends munit.FunSuite:
     assert(newLru.get("five") == Some(5))
   }
   test("same key overwrites old values") {
-    val newLru = lruCache[Int](5)  
+    val newLru = lruCache[Int](5)
     newLru.set("one", 1)
     newLru.set("one", 2)
     newLru.set("one", 3)
