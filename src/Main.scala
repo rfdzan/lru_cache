@@ -22,7 +22,6 @@ class lruCache[T](itemLimit: Int):
     	case Some(value) => true
   def get(key: String): Option[T] =
     evict(key, false)
-    dll.pushToBack(key)
     return map.get(key)
   def set(key: String, value: T): Unit =
     evict(key, true)
