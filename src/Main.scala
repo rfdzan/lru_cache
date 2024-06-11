@@ -1,9 +1,17 @@
 package Main
 import scala.collection.mutable.Map
-import java.{util => ju}
+
+case class MapValue[T](
+    private val value: T,
+    private val node: Node[T]
+):
+  def getVal: T =
+    return value
+  def getNode: Node[T] =
+    return node
 
 class lruCache[T](itemLimit: Int):
-  private var map: Map[String, T] = Map()
+  private var map: Map[String, MapValue[T]] = Map()
   private var dll = new doublyLinkedList[String]
   private def evict(key: String, put: Boolean): Unit =
     val plusOne = if put then 1 else 0
@@ -13,19 +21,29 @@ class lruCache[T](itemLimit: Int):
       // remove map entry possesing that key.
       val popped = dll.popFront match
         case None      => None
-        case Some(key) => map.remove(key)
-    dll.pushToBack(key)
+        case Some(key) => 
+          map.remove(key)
+          dll.pushToBack(key)
+    // TODO: move cache hit keys to the end of the list
   def has(key: String): Boolean =
-    evict(key, false)
     map.get(key) match
       case None        => false
-      case Some(value) => true
+      case Some(value) => 
+        evict(key, false)
+        true
   def get(key: String): Option[T] =
-    evict(key, false)
-    return map.get(key)
+    val mapVal = map.get(key) match
+      case None => 
+        // cache miss
+        None
+      case Some(value) =>
+        // cache hit
+        evict(key, false)
+        Some(value.getVal)
+    return mapVal
   def set(key: String, value: T): Unit =
     evict(key, true)
-    map.addOne(key, value)
+    map.addOne(key, MapValue(value, Node(value)))
 
 class Node[T](data: T):
   var content: T = data
