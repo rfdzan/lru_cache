@@ -23,7 +23,7 @@ class doublyLinkedList[T](
         case None => return
         case Some(value) =>
           currentNode = value.nextNode
-  def pushToFront(newNode: Node[T]): Option[Node[T]] =
+  private def pushToFront(newNode: Node[T]): Option[Node[T]] =
     if firstNode == None then
       firstNode = Some(newNode)
       lastNode = Some(newNode)
@@ -57,7 +57,7 @@ class doublyLinkedList[T](
       case Some(node) => node.nextNode
     return toReturn
 
-  def popBack: Option[T] =
+  private def popBack: Option[T] =
     val toReturn = lastNode match
       case None       => None
       case Some(node) => Some(node.content)

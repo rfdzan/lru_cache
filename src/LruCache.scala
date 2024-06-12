@@ -9,8 +9,8 @@ case class MapValue[T, U](
     return value
 
 class lruCache[T](itemLimit: Int):
-  private var map: Map[String, MapValue[T, String]] = Map()
-  private var dll = new doublyLinkedList[String]
+  private val map: Map[String, MapValue[T, String]] = Map()
+  private val dll = new doublyLinkedList[String]
   private def evict(key: String): Boolean =
     if map.size + 1 > itemLimit then
       // get key from ddl
