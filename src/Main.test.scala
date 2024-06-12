@@ -64,7 +64,7 @@ class LruTests extends munit.FunSuite:
     assert(newLru.get("two") == Some(2))
     assert(newLru.get("three") == Some(3))
   }
-  test("takes 'get' operation into account evicting") {
+  test("takes 'get' operation into account when evicting") {
     val newLru = lruCache[Int](3)
     newLru.set("one", 1)
     newLru.set("two", 2)
@@ -75,7 +75,7 @@ class LruTests extends munit.FunSuite:
     assert(newLru.get("three") == Some(3))
     assert(newLru.get("four") == Some(4))
   }
-  test("takes 'has' operation into account evicting") {
+  test("takes 'has' operation into account when evicting") {
     val newLru = lruCache[Int](3)
     newLru.set("one", 1)
     newLru.set("two", 2)

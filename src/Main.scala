@@ -1,15 +1,15 @@
 package Main
 import scala.collection.mutable.Map
 
-case class MapValue[T](
+case class MapValue[T, U](
     val value: T,
-    var node: Node[T]
+    var node: Node[U]
 ):
   def getVal: T =
     return value
 
 class lruCache[T](itemLimit: Int):
-  private var map: Map[String, MapValue[T]] = Map()
+  private var map: Map[String, MapValue[T, String]] = Map()
   private var dll = new doublyLinkedList[String]
   private def evict(key: String): Boolean =
     if map.size + 1 > itemLimit then
@@ -22,28 +22,48 @@ class lruCache[T](itemLimit: Int):
           map.remove(key)
           return true
     return false
-  private def mostRecentlyUsed(key: String, mapVal: MapValue[T]) =
-    // TODO: move cache hit keys to the end of the list
+  private def mostRecentlyUsed(key: String, mapVal: MapValue[T, String]): Unit =
+    // if the most recently used value is already at the tail, don't touch it.
+    if dll.lastNode == Some(mapVal.node) then return
     val storedNodeNextNode = mapVal.node.nextNode
     val storedNodePrevNode = mapVal.node.prevNode
     mapVal.node.nextNode match
-      case None => None
+      case None       => None
       case Some(node) =>
-        node.prevNode = storedNodePrevNode
+        // if the original node from mapVal is the first node of the list,
+        // the pattern matched next node becomes the first node.
+        //
+        // [node1, node2, node3, node4, node5]
+        //    ^og    ^
+        // [node2, node3, node4, node5, node1]
+        //    ^                           ^og
+        //
+        // original node moves to the tail, as it is the most recently used.
+        if Some(mapVal.node) == dll.firstNode then
+          node.prevNode = None
+          dll.firstNode = Some(node)
+        else node.prevNode = storedNodePrevNode
     mapVal.node.prevNode match
-      case None => None
+      case None       => None
       case Some(node) =>
-        node.nextNode = storedNodeNextNode
-    map.update(key, mapVal)
+        // if the original node from mapVal is the first node of the list,
+        //
+        node.nextNode =
+          if dll.firstNode != Some(mapVal.node) then storedNodeNextNode else return
+    dll.pushToBack(Node(key)) match
+      case None       =>
+      case Some(node) =>
+        // updates the map with the node returned from a call to pushToBack,
+        // which contains a node with the previous node and next node updated
+        map.update(key, MapValue(mapVal.getVal, node))
+
   def readQueue =
     dll.readAll
   def has(key: String): Boolean =
     map.get(key) match
-      case None        => false
+      case None => false
       case Some(value) =>
-        // this is probably not passing by reference
         mostRecentlyUsed(key, value)
-        // dll.pushToBack(Node(key))
         true
   def get(key: String): Option[T] =
     map.get(key) match
@@ -53,12 +73,16 @@ class lruCache[T](itemLimit: Int):
       case Some(value) =>
         // cache hit
         mostRecentlyUsed(key, value)
-        // dll.pushToBack(Node(key))
         return Some(value.getVal)
   def set(key: String, value: T): Unit =
-    evict(key)
-    dll.pushToBack(Node(key))
-    map.addOne(key, MapValue(value, Node(value)))
+    dll.pushToBack(Node(key)) match
+      case None       =>
+      case Some(node) =>
+        // checks if adding this new item would exceed the limit of the cache
+        evict(key)
+        // adds a new item to the cache
+        // new node comes from the call to pushToBack which sets its previous and next node element accordingly
+        map.addOne(key, MapValue(value, node))
 
 class Node[T](data: T):
   var content: T = data
@@ -129,15 +153,15 @@ class doublyLinkedList[T](
     return toReturn
 
 @main def main =
-  val newLru = lruCache[Int](3)
+  val newLru = lruCache[Int](5)
   newLru.set("one", 1)
   newLru.set("two", 2)
   newLru.set("three", 3)
-
+  newLru.has("one")
+  newLru.set("four", 4)
+  newLru.set("five", 5)
   newLru.readQueue
   println()
-  newLru.has("two")
+  newLru.has("one")
   newLru.readQueue
-  // assert(newLru.get("two") == None)
-  // assert(newLru.get("three") == Some(3))
-  // assert(newLru.get("four") == Some(4))
+  println()
