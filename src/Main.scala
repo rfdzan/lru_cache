@@ -31,7 +31,7 @@ class lruCache[T](itemLimit: Int):
       case None       => None
       case Some(node) =>
         // if the original node from mapVal is the first node of the list,
-        // the pattern matched next node becomes the first node.
+        // the pattern matched mapVal.node.nextNode becomes the first node.
         //
         // [node1, node2, node3, node4, node5]
         //    ^og    ^
@@ -46,10 +46,9 @@ class lruCache[T](itemLimit: Int):
     mapVal.node.prevNode match
       case None       => None
       case Some(node) =>
-        // if the original node from mapVal is the first node of the list,
-        //
-        node.nextNode =
-          if dll.firstNode != Some(mapVal.node) then storedNodeNextNode else return
+        // earlier checks prior to this block and the pattern matching towards 'Some' case makes sure that when entering this block,
+        // the original mapVal.node must have come from somewhere in the middle, it will never be the first or the last node.
+        node.nextNode = storedNodeNextNode
     dll.pushToBack(Node(key)) match
       case None       =>
       case Some(node) =>
