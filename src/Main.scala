@@ -1,31 +1,87 @@
 package Main
 import scala.collection.mutable.Map
-import java.{util => ju}
+
+case class MapValue[T, U](
+    val value: T,
+    var node: Node[U]
+):
+  def getVal: T =
+    return value
 
 class lruCache[T](itemLimit: Int):
-  private var map: Map[String, T] = Map()
+  private var map: Map[String, MapValue[T, String]] = Map()
   private var dll = new doublyLinkedList[String]
-  private def evict(key: String, put: Boolean): Unit =
-    val plusOne = if put then 1 else 0
-    if map.size + plusOne > itemLimit then
+  private def evict(key: String): Boolean =
+    if map.size + 1 > itemLimit then
       // get key from ddl
       // use popped key from ddl to
       // remove map entry possesing that key.
-      val popped = dll.popFront match
-        case None      => None
-        case Some(key) => map.remove(key)
-    dll.pushToBack(key)
+      dll.popFront match
+        case None => return false
+        case Some(key) =>
+          map.remove(key)
+          return true
+    return false
+  private def mostRecentlyUsed(key: String, mapVal: MapValue[T, String]): Unit =
+    // if the most recently used value is already at the tail, don't touch it.
+    if dll.lastNode == Some(mapVal.node) then return
+    val storedNodeNextNode = mapVal.node.nextNode
+    val storedNodePrevNode = mapVal.node.prevNode
+    mapVal.node.nextNode match
+      case None       => None
+      case Some(node) =>
+        // if the original node from mapVal is the first node of the list,
+        // the pattern matched mapVal.node.nextNode becomes the first node.
+        //
+        // [node1, node2, node3, node4, node5]
+        //    ^og    ^
+        // [node2, node3, node4, node5, node1]
+        //    ^                           ^og
+        //
+        // original node moves to the tail, as it is the most recently used.
+        if Some(mapVal.node) == dll.firstNode then
+          node.prevNode = None
+          dll.firstNode = Some(node)
+        else node.prevNode = storedNodePrevNode
+    mapVal.node.prevNode match
+      case None       => None
+      case Some(node) =>
+        // earlier checks prior to this block and the pattern matching towards 'Some' case makes sure that when entering this block,
+        // the original mapVal.node must have come from somewhere in the middle, it will never be the first or the last node.
+        node.nextNode = storedNodeNextNode
+    dll.pushToBack(Node(key)) match
+      case None       =>
+      case Some(node) =>
+        // updates the map with the node returned from a call to pushToBack,
+        // which contains a node with the previous node and next node updated
+        map.update(key, MapValue(mapVal.getVal, node))
+
+  def readQueue =
+    dll.readAll
   def has(key: String): Boolean =
-    evict(key, false)
     map.get(key) match
-      case None        => false
-      case Some(value) => true
+      case None => false
+      case Some(value) =>
+        mostRecentlyUsed(key, value)
+        true
   def get(key: String): Option[T] =
-    evict(key, false)
-    return map.get(key)
+    map.get(key) match
+      case None =>
+        // cache miss
+        return None
+      case Some(value) =>
+        // cache hit
+        mostRecentlyUsed(key, value)
+        return Some(value.getVal)
   def set(key: String, value: T): Unit =
-    evict(key, true)
-    map.addOne(key, value)
+    dll.pushToBack(Node(key)) match
+      case None       =>
+      case Some(node) =>
+        // checks if adding this new item would exceed the limit of the cache
+        evict(key)
+        // adds a new item to the cache
+        // new node comes from the call to pushToBack which sets its previous and next node element accordingly
+        map.addOne(key, MapValue(value, node))
 
 class Node[T](data: T):
   var content: T = data
@@ -40,30 +96,41 @@ class doublyLinkedList[T](
     var firstNode: Option[Node[T]] = None,
     var lastNode: Option[Node[T]] = None
 ):
-  def pushToFront(data: T): Unit =
-    val newNode = Some(Node(data))
+  def readAll: Unit =
+    var currentNode = firstNode
+    while (true)
+      println(currentNode match
+        case None        => return
+        case Some(value) => Some(value.content)
+      )
+      currentNode match
+        case None => return
+        case Some(value) =>
+          currentNode = value.nextNode
+  def pushToFront(newNode: Node[T]): Option[Node[T]] =
     if firstNode == None then
-      firstNode = newNode
-      lastNode = newNode
-      return
-    newNode match
-      case Some(node) => node.addNextNode(firstNode)
+      firstNode = Some(newNode)
+      lastNode = Some(newNode)
+      return Some(newNode)
+    newNode.addNextNode(firstNode)
     firstNode match
-      case None       => return
-      case Some(node) => node.addPreviousNode(newNode)
-    firstNode = newNode
-  def pushToBack(data: T): Unit =
-    val newNode = Some(Node(data))
+      case None       => return None
+      case Some(node) => node.addPreviousNode(Some(newNode))
+    firstNode = Some(newNode)
+    return Some(newNode)
+
+  def pushToBack(newNode: Node[T]): Option[Node[T]] =
     if firstNode == None then
-      firstNode = newNode
-      lastNode = newNode
-      return
-    newNode match
-      case Some(node) => node.addPreviousNode(lastNode)
+      firstNode = Some(newNode)
+      lastNode = Some(newNode)
+      return Some(newNode)
+    newNode.addPreviousNode(lastNode)
     lastNode match
-      case None       => return
-      case Some(node) => node.addNextNode(newNode)
-    lastNode = newNode
+      case None       => return None
+      case Some(node) => node.addNextNode(Some(newNode))
+    lastNode = Some(newNode)
+    return Some(newNode)
+
   def popFront: Option[T] =
     val toReturn = firstNode match
       case None       => None
@@ -85,4 +152,15 @@ class doublyLinkedList[T](
     return toReturn
 
 @main def main =
+  val newLru = lruCache[Int](5)
+  newLru.set("one", 1)
+  newLru.set("two", 2)
+  newLru.set("three", 3)
+  newLru.has("one")
+  newLru.set("four", 4)
+  newLru.set("five", 5)
+  newLru.readQueue
+  println()
+  newLru.has("one")
+  newLru.readQueue
   println()
