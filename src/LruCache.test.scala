@@ -1,5 +1,6 @@
 //> using toolkit default
-import Main.lruCache
+import LinkedList.doublyLinkedList
+import LruCache.lruCache
 class LruTests extends munit.FunSuite:
   test("has: return true for existing key and false otherwise") {
     val newLru = lruCache[Int](5)
