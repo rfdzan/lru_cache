@@ -13,8 +13,7 @@ class lruCache[T](itemLimit: Int):
   private val dll = new doublyLinkedList[String]
   private def evict(key: String): Boolean =
     if map.size + 1 > itemLimit then
-      // get key from ddl
-      // use popped key from ddl to
+      // use popped key from dll to
       // remove map entry possesing that key.
       dll.popFront match
         case None => return false
