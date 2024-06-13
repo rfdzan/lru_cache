@@ -22,14 +22,14 @@ class lruCache[T](itemLimit: Int):
           return true
     return false
   private def mostRecentlyUsed(key: String, mapVal: MapValue[T, String]): Unit =
-    // if the most recently used value is already at the tail, don't touch it.
+    // if the most recently used key is already at the tail, don't touch it.
     if dll.lastNode == Some(mapVal.node) then return
     val storedNodeNextNode = mapVal.node.nextNode
     val storedNodePrevNode = mapVal.node.prevNode
     mapVal.node.nextNode match
       case None       => None
       case Some(node) =>
-        // if the original node from mapVal is the first node of the list,
+        // if the original mapVal.node is the first node of the list,
         // the pattern matched mapVal.node.nextNode becomes the first node.
         //
         // [node1, node2, node3, node4, node5]
@@ -37,7 +37,7 @@ class lruCache[T](itemLimit: Int):
         // [node2, node3, node4, node5, node1]
         //    ^                           ^og
         //
-        // original node moves to the tail, as it is the most recently used.
+        // original mapVal.node moves to the tail, as it is the most recently used.
         if Some(mapVal.node) == dll.firstNode then
           node.prevNode = None
           dll.firstNode = Some(node)
@@ -52,7 +52,7 @@ class lruCache[T](itemLimit: Int):
       case None       =>
       case Some(node) =>
         // updates the map with the node returned from a call to pushToBack,
-        // which contains a node with the previous node and next node updated
+        // new node is returned from the call to pushToBack which sets its previous and next node element accordingly.
         map.update(key, MapValue(mapVal.getVal, node))
 
   def readQueue =
@@ -79,5 +79,5 @@ class lruCache[T](itemLimit: Int):
         // checks if adding this new item would exceed the limit of the cache
         evict(key)
         // adds a new item to the cache
-        // new node comes from the call to pushToBack which sets its previous and next node element accordingly
+        // new node is returned from the call to pushToBack which sets its previous and next node element accordingly
         map.addOne(key, MapValue(value, node))
