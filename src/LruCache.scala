@@ -54,7 +54,8 @@ class lruCache[T](itemLimit: Int):
         // updates the map with the node returned from a call to pushToBack,
         // new node is returned from the call to pushToBack which sets its previous and next node element accordingly.
         map.update(key, MapValue(mapVal.getVal, node))
-
+  def cacheSize: Int = 
+    return map.size
   def readQueue =
     dll.readAll
   def has(key: String): Boolean =

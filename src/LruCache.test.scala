@@ -88,3 +88,43 @@ class LruTests extends munit.FunSuite:
     assert(newLru.get("four") == Some(4))
 
   }
+  test("cache: an empty cache has the size of 0") {
+    val newLru = lruCache[String](5)
+    assert(newLru.cacheSize == 0)
+  }
+  test("cache: 'has' method does not change the cache size") {
+    val newLru = lruCache[String](5)
+    val keys = List("foo", "bar", "baz", "ham", "lamb")
+    val values = List("apple", "banana", "sunkist", "guava", "jackfruit")
+
+    keys.zip(values).foreach((k, v) => newLru.set(k,v))
+    assert(newLru.cacheSize == 5)
+
+    assert(newLru.has("foo") == true)
+    assert(newLru.cacheSize == 5)
+  }
+  test("cache: 'get' method does not change the cache size") {
+    val newLru = lruCache[String](5)
+    val keys = List("foo", "bar", "baz", "ham", "lamb")
+    val values = List("apple", "banana", "sunkist", "guava", "jackfruit")
+
+    keys.zip(values).foreach((k, v) => newLru.set(k,v))
+    assert(newLru.cacheSize == 5)
+
+    assert(newLru.get("foo") == Some("apple"))
+    assert(newLru.cacheSize == 5)
+  }
+  test("cache: adding new keys to a full cache evicts the oldest and maintains the cache size") {
+    val newLru = lruCache[String](5)
+    val keys = List("foo", "bar", "baz", "ham", "lamb")
+    val values = List("apple", "banana", "sunkist", "guava", "jackfruit")
+
+    keys.zip(values).foreach((k, v) => newLru.set(k,v))
+    assert(newLru.cacheSize == 5)
+
+    newLru.set("boom", "shoom")
+    assert(newLru.get("foo") == None)
+
+    assert(newLru.get("boom") == Some("shoom"))
+    assert(newLru.cacheSize == 5)
+  }
